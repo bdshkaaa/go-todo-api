@@ -6,21 +6,34 @@ import (
 )
 
 type Todo struct {
-	ID   int    `json:"id"`
-	Task string `json:"task"`
+	ID    int    `json:"id"`
+	Title string `json:"title"`
 }
 
 var todos = []Todo{}
+var nextID = 1
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(todos)
 }
 
 func addTodo(w http.ResponseWriter, r *http.Request) {
-	var todo Todo
-	json.NewDecoder(r.Body).Decode(&todo)
-	todos = append(todos, todo)
-	json.NewEncoder(w).Encode(todo)
+	var newTodo Todo
+
+	err := json.NewDecoder(r.Body).Decode(&newTodo)
+	if err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	newTodo.ID = nextID
+	nextID++
+
+	todos = append(todos, newTodo)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(newTodo)
 }
 
 func main() {
