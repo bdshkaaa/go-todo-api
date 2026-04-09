@@ -10,7 +10,7 @@ type Todo struct {
 	Task string `json:"task"`
 }
 
-var todos []Todo
+var todos = []Todo{}
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(todos)
