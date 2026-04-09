@@ -4,15 +4,24 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+
+	"go-todo-api/models"
+	"go-todo-api/storage"
 )
 
-type Todo struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
-}
-
-var todos = []Todo{}
+var todos []models.Todo
 var nextID = 1
+
+func init() {
+	loaded, _ := storage.LoadTodos()
+	todos = loaded
+
+	for _, t := range todos {
+		if t.ID >= nextID {
+			nextID = t.ID + 1
+		}
+	}
+}
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -20,7 +29,7 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func addTodo(w http.ResponseWriter, r *http.Request) {
-	var newTodo Todo
+	var newTodo models.Todo
 
 	err := json.NewDecoder(r.Body).Decode(&newTodo)
 	if err != nil {
@@ -30,7 +39,9 @@ func addTodo(w http.ResponseWriter, r *http.Request) {
 
 	newTodo.ID = nextID
 	nextID++
+
 	todos = append(todos, newTodo)
+	storage.SaveTodos(todos)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(newTodo)
@@ -38,16 +49,12 @@ func addTodo(w http.ResponseWriter, r *http.Request) {
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
+	id, _ := strconv.Atoi(idStr)
 
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
-	}
-
-	for i, todo := range todos {
-		if todo.ID == id {
+	for i, t := range todos {
+		if t.ID == id {
 			todos = append(todos[:i], todos[i+1:]...)
+			storage.SaveTodos(todos)
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
