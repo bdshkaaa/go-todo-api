@@ -2,5 +2,9 @@
   {
     "id": 1,
     "title": "Persistent task"
+  },
+  {
+    "id": 2,
+    "title": "Купить молоко"
   }
 ]
